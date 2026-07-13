@@ -3,7 +3,7 @@
 Version 1.0 — collaborative software-evolution project.
 
 A **modular monolith**: one Spring Boot backend + one React (Vite) frontend, one shared
-PostgreSQL database. The system is split into vertical **modules**, one per development team.
+MySQL/MariaDB database. The system is split into vertical **modules**, one per development team.
 Each module is an independent package/folder that plugs into the shared platform (security,
 error handling, audit, database).
 
@@ -12,7 +12,7 @@ error handling, audit, database).
 | Layer     | Technology                                            |
 | --------- | ----------------------------------------------------- |
 | Frontend  | React 18 + Vite + TypeScript, React Router, Axios     |
-| Backend   | Java 21, Spring Boot 3.3, Spring Security, Spring Data JPA |
+| Backend   | Java 17, Spring Boot 3.3, Spring Security, Spring Data JPA |
 | Auth      | JWT access token + rotating refresh token             |
 | Database  | MySQL / MariaDB                                       |
 | Migrations| Flyway (`backend/src/main/resources/db/migration`)    |
@@ -84,9 +84,11 @@ There is **no public self-registration**. An admin creates accounts and assigns 
 | POST   | `/api/v1/auth/login`    | `{email,password}`                        | no    |
 | POST   | `/api/v1/auth/refresh`  | `{refreshToken}`                          | no    |
 | POST   | `/api/v1/auth/logout`   | `{refreshToken}`                          | no    |
+| PUT    | `/api/v1/auth/password` | `{currentPassword,newPassword}`           | yes   |
 | GET    | `/api/v1/users/me`      | —                                         | yes   |
 | GET    | `/api/v1/users`         | —                                         | ADMIN |
 | POST   | `/api/v1/users`         | `{fullName,email,password,roles:[...]}`   | ADMIN |
+| PUT    | `/api/v1/users/{id}`    | `{fullName,email,roles:[...],enabled}`    | ADMIN |
 | DELETE | `/api/v1/users/{id}`    | —                                         | ADMIN |
 
 **Seeded accounts** (created on first startup): `admin@uni.ms` / `Admin123!` (ADMIN),

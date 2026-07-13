@@ -217,6 +217,16 @@ label.checkbox input {
   border-bottom: none;
 }
 
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.row-actions button {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+}
+
 /* Toasts */
 .toast-container {
   position: fixed;
