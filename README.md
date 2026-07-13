@@ -98,3 +98,14 @@ See [docs/BRANCHING.md](docs/BRANCHING.md) for the Git workflow every team follo
 
 All contributors must read [CONTRIBUTING.md](CONTRIBUTING.md) — it covers local setup, the
 branching strategy, commit-message conventions, the pull-request process, and coding standards.
+
+## Documentation
+
+| Document | Purpose |
+| -------- | ------- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Software architecture: modular-monolith design, module map & dependency rules, auth design, data model, deployment view |
+| [docs/BRANCHING.md](docs/BRANCHING.md) | Git branching strategy and workflow every team follows |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, commit conventions, PR process, coding standards |
+
+Start with the [architecture document](docs/ARCHITECTURE.md) — it explains how the modules fit
+together and the rules that let all five teams work in parallel without stepping on each other.
