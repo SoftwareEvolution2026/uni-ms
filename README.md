@@ -3,7 +3,7 @@
 Version 1.0 — collaborative software-evolution project.
 
 A **modular monolith**: one Spring Boot backend + one React (Vite) frontend, one shared
-PostgreSQL database. The system is split into vertical **modules**, one per development team.
+MySQL/MariaDB database. The system is split into vertical **modules**, one per development team.
 Each module is an independent package/folder that plugs into the shared platform (security,
 error handling, audit, database).
 
@@ -12,7 +12,7 @@ error handling, audit, database).
 | Layer     | Technology                                            |
 | --------- | ----------------------------------------------------- |
 | Frontend  | React 18 + Vite + TypeScript, React Router, Axios     |
-| Backend   | Java 21, Spring Boot 3.3, Spring Security, Spring Data JPA |
+| Backend   | Java 17, Spring Boot 3.3, Spring Security, Spring Data JPA |
 | Auth      | JWT access token + rotating refresh token             |
 | Database  | MySQL / MariaDB                                       |
 | Migrations| Flyway (`backend/src/main/resources/db/migration`)    |
