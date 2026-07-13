@@ -84,6 +84,7 @@ There is **no public self-registration**. An admin creates accounts and assigns 
 | POST   | `/api/v1/auth/login`    | `{email,password}`                        | no    |
 | POST   | `/api/v1/auth/refresh`  | `{refreshToken}`                          | no    |
 | POST   | `/api/v1/auth/logout`   | `{refreshToken}`                          | no    |
+| PUT    | `/api/v1/auth/password` | `{currentPassword,newPassword}`           | yes   |
 | GET    | `/api/v1/users/me`      | —                                         | yes   |
 | GET    | `/api/v1/users`         | —                                         | ADMIN |
 | POST   | `/api/v1/users`         | `{fullName,email,password,roles:[...]}`   | ADMIN |

@@ -141,7 +141,11 @@ class AuthFlowIntegrationTest {
 
     @Test
     void removedRegisterEndpointReturns404NotServerError() throws Exception {
+        // Authenticated so the request passes the security filter and reaches the
+        // dispatcher; the removed route then yields a clean 404 (not a 500).
+        String adminToken = login("admin@uni.ms", "Admin123!");
         mockMvc.perform(post("/api/v1/auth/register")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"fullName":"x","email":"z@z.ms","password":"Passw0rd!"}"""))
