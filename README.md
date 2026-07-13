@@ -87,6 +87,7 @@ There is **no public self-registration**. An admin creates accounts and assigns 
 | GET    | `/api/v1/users/me`      | —                                         | yes   |
 | GET    | `/api/v1/users`         | —                                         | ADMIN |
 | POST   | `/api/v1/users`         | `{fullName,email,password,roles:[...]}`   | ADMIN |
+| PUT    | `/api/v1/users/{id}`    | `{fullName,email,roles:[...],enabled}`    | ADMIN |
 | DELETE | `/api/v1/users/{id}`    | —                                         | ADMIN |
 
 **Seeded accounts** (created on first startup): `admin@uni.ms` / `Admin123!` (ADMIN),

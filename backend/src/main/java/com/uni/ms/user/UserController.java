@@ -1,6 +1,7 @@
 package com.uni.ms.user;
 
 import com.uni.ms.user.dto.CreateUserRequest;
+import com.uni.ms.user.dto.UpdateUserRequest;
 import com.uni.ms.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,6 +45,14 @@ public class UserController {
                                                @AuthenticationPrincipal UserDetails principal) {
         UserResponse created = userService.createUser(request, principal.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse update(@PathVariable Long id,
+                               @Valid @RequestBody UpdateUserRequest request,
+                               @AuthenticationPrincipal UserDetails principal) {
+        return userService.updateUser(id, request, principal.getUsername());
     }
 
     @DeleteMapping("/{id}")
