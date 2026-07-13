@@ -9,14 +9,21 @@ import type { User } from "../types";
 
 const ALL_ROLES = ["ROLE_ADMIN", "ROLE_LECTURER", "ROLE_STAFF", "ROLE_STUDENT"];
 
-const emptyForm = { fullName: "", email: "", password: "", roles: ["ROLE_STUDENT"] };
+const emptyForm = {
+  fullName: "",
+  email: "",
+  password: "",
+  roles: ["ROLE_STUDENT"] as string[],
+  enabled: true,
+};
 
 export default function Users() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [form, setForm] = useState(emptyForm);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<User | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -30,8 +37,15 @@ export default function Users() {
   }, []);
 
   function openCreate() {
+    setEditingId(null);
     setForm(emptyForm);
-    setCreateOpen(true);
+    setFormOpen(true);
+  }
+
+  function openEdit(u: User) {
+    setEditingId(u.id);
+    setForm({ fullName: u.fullName, email: u.email, password: "", roles: u.roles, enabled: u.enabled });
+    setFormOpen(true);
   }
 
   function toggleRole(role: string) {
@@ -47,14 +61,29 @@ export default function Users() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post("/users", form);
-      setCreateOpen(false);
-      toast.success(`User ${form.email} created`);
+      if (editingId !== null) {
+        await api.put(`/users/${editingId}`, {
+          fullName: form.fullName,
+          email: form.email,
+          roles: form.roles,
+          enabled: form.enabled,
+        });
+        toast.success(`User ${form.email} updated`);
+      } else {
+        await api.post("/users", {
+          fullName: form.fullName,
+          email: form.email,
+          password: form.password,
+          roles: form.roles,
+        });
+        toast.success(`User ${form.email} created`);
+      }
+      setFormOpen(false);
       await load();
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Failed to create user";
+        "Failed to save user";
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -77,6 +106,8 @@ export default function Users() {
     }
   }
 
+  const isEditing = editingId !== null;
+
   return (
     <div className="page">
       <header className="topbar">
@@ -97,6 +128,7 @@ export default function Users() {
               <th>Name</th>
               <th>Email</th>
               <th>Roles</th>
+              <th>Status</th>
               <th></th>
             </tr>
           </thead>
@@ -106,7 +138,11 @@ export default function Users() {
                 <td>{u.fullName}</td>
                 <td>{u.email}</td>
                 <td>{u.roles.map((r) => r.replace("ROLE_", "")).join(", ")}</td>
-                <td>
+                <td>{u.enabled ? "Active" : "Disabled"}</td>
+                <td className="row-actions">
+                  <button className="ghost" onClick={() => openEdit(u)}>
+                    Edit
+                  </button>
                   {u.email !== currentUser?.email && (
                     <button className="danger" onClick={() => setPendingDelete(u)}>
                       Delete
@@ -119,7 +155,11 @@ export default function Users() {
         </table>
       </main>
 
-      <Modal open={createOpen} title="Create user" onClose={() => setCreateOpen(false)}>
+      <Modal
+        open={formOpen}
+        title={isEditing ? "Edit user" : "Create user"}
+        onClose={() => setFormOpen(false)}
+      >
         <form onSubmit={onSubmit}>
           <label>
             Full name
@@ -138,16 +178,18 @@ export default function Users() {
               required
             />
           </label>
-          <label>
-            Temporary password
-            <input
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              type="text"
-              minLength={8}
-              required
-            />
-          </label>
+          {!isEditing && (
+            <label>
+              Temporary password
+              <input
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                type="text"
+                minLength={8}
+                required
+              />
+            </label>
+          )}
           <fieldset className="roles">
             <legend>Roles</legend>
             {ALL_ROLES.map((role) => (
@@ -161,12 +203,22 @@ export default function Users() {
               </label>
             ))}
           </fieldset>
+          {isEditing && (
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={form.enabled}
+                onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
+              />
+              Account active
+            </label>
+          )}
           <div className="modal-actions">
-            <button type="button" className="ghost" onClick={() => setCreateOpen(false)}>
+            <button type="button" className="ghost" onClick={() => setFormOpen(false)}>
               Cancel
             </button>
             <button disabled={submitting || form.roles.length === 0}>
-              {submitting ? "Creating…" : "Create user"}
+              {submitting ? "Saving…" : isEditing ? "Save changes" : "Create user"}
             </button>
           </div>
         </form>

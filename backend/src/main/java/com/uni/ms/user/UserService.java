@@ -4,6 +4,7 @@ import com.uni.ms.common.audit.AuditService;
 import com.uni.ms.common.exception.ApiException;
 import com.uni.ms.common.exception.ResourceNotFoundException;
 import com.uni.ms.user.dto.CreateUserRequest;
+import com.uni.ms.user.dto.UpdateUserRequest;
 import com.uni.ms.user.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,33 @@ public class UserService {
 
         auditService.record(actorEmail, "USER_CREATED", "Created " + request.email()
                 + " with roles " + request.roles());
+        return UserResponse.from(user);
+    }
+
+    @Transactional
+    public UserResponse updateUser(Long id, UpdateUserRequest request, String actorEmail) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+
+        boolean emailChanged = !user.getEmail().equalsIgnoreCase(request.email());
+        if (emailChanged && userRepository.existsByEmail(request.email())) {
+            throw new ApiException(HttpStatus.CONFLICT, "Email already registered");
+        }
+
+        Set<Role> roles = parseRoles(request.roles());
+        boolean editingSelf = user.getEmail().equalsIgnoreCase(actorEmail);
+        if (editingSelf && (!roles.contains(Role.ROLE_ADMIN) || !request.enabled())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "You cannot remove your own admin role or disable your own account");
+        }
+
+        user.setFullName(request.fullName());
+        user.setEmail(request.email());
+        user.setRoles(roles);
+        user.setEnabled(request.enabled());
+        userRepository.save(user);
+
+        auditService.record(actorEmail, "USER_UPDATED", "Updated " + user.getEmail());
         return UserResponse.from(user);
     }
 
