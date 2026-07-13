@@ -23,14 +23,58 @@ feature/...    ●──●            ●──●                (short-lived,
 
 ## Team → branch ownership
 
-| Team | Feature branch prefix |
-| ---- | --------------------- |
-| 1    | `feature/auth-*`, `feature/user-*` |
-| 2    | `feature/student-*`   |
-| 3    | `feature/course-*`, `feature/dept-*` |
-| 4    | `feature/result-*`    |
-| 5    | `feature/report-*`    |
-| 6    | `feature/ci-*`, `feature/deploy-*`, `feature/notify-*` |
+Each team owns a prefix. Only that team creates branches under its prefix, so two teams never
+touch the same files on the same branch.
+
+| Team | Module | Branch prefix |
+| ---- | ------ | ------------- |
+| 1    | Auth & Users        | `feature/auth-*`, `feature/user-*` |
+| 2    | Student Management  | `feature/student-*` |
+| 3    | Course & Department | `feature/course-*`, `feature/dept-*` |
+| 4    | Results & Records   | `feature/result-*` |
+| 5    | Reports & Analytics | `feature/report-*`, `feature/analytics-*` |
+| 6    | Notifications / Config / CI-CD / Deploy | `feature/notify-*`, `feature/settings-*`, `feature/ci-*`, `feature/deploy-*` |
+
+## Anticipated feature branches
+
+The concrete branches each team is expected to create for Version 1.0. This is a planning
+guide, not a hard limit — split further if a branch gets too big, and add `fix/*` branches as
+bugs surface. Keep each branch to **one** cohesive unit of work.
+
+**Team 1 — Auth & Users**
+- `feature/auth-login-refresh` — login, refresh-token rotation, logout ✅ *(done)*
+- `feature/user-management` — admin create / list / delete users with roles ✅ *(done)*
+- `feature/user-edit` — update a user's details and roles
+- `feature/auth-password-change` — let a user change their own password
+
+**Team 2 — Student Management**
+- `feature/student-crud` — create / read / update / delete students
+- `feature/student-search` — search, filter and paginate the student list
+- `feature/student-profile` — student detail/profile view
+
+**Team 3 — Course & Department Management**
+- `feature/dept-crud` — departments CRUD
+- `feature/course-crud` — courses CRUD (linked to a department)
+- `feature/course-assignment` — assign lecturers / register students to courses
+
+**Team 4 — Results & Academic Records**
+- `feature/result-entry` — record and edit student results per course
+- `feature/result-gpa` — GPA / grade computation
+- `feature/result-transcript` — per-student academic transcript
+
+**Team 5 — Reports, Dashboard & Analytics**
+- `feature/report-dashboard` — summary dashboard with key stats
+- `feature/analytics-charts` — charts (enrolments, pass rates, etc.)
+- `feature/report-export` — export reports (PDF / CSV)
+
+**Team 6 — Notifications, Config, CI-CD, Deployment** *(deferred for now)*
+- `feature/settings-config` — application configuration & settings screen
+- `feature/notify-email` — email / in-app notifications
+- `feature/ci-pipeline` — GitHub Actions build + test workflow
+- `feature/deploy-cloud` — cloud deployment (Render / Railway / Azure / …)
+
+**Cross-cutting (any team, as needed)**
+- `fix/<desc>` — bug fixes  ·  `chore/<desc>` — tooling/config  ·  `docs/<desc>` — documentation
 
 ## Workflow (every change)
 
