@@ -55,7 +55,7 @@ automatically on first run via `createDatabaseIfNotExist=true`, so you only need
 running. Copy `backend/.env.example` and adjust:
 
 ```
-DB_URL=jdbc:mariadb://localhost:3306/uni_ms?createDatabaseIfNotExist=true
+DB_URL=jdbc:mysql://localhost:3306/uni_ms?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
 DB_USER=root
 DB_PASSWORD=root
 JWT_SECRET=change-me-to-a-long-random-string-at-least-32-chars
