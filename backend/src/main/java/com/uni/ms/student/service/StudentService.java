@@ -8,8 +8,7 @@ import com.uni.ms.student.dto.StudentResponse;
 import com.uni.ms.student.dto.UpdateStudentRequest;
 import com.uni.ms.student.entity.Student;
 import com.uni.ms.student.repository.StudentRepository;
-import com.uni.ms.user.User;
-import com.uni.ms.user.UserRepository;
+import com.uni.ms.user.UserDirectory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,7 @@ import java.util.List;
 public class StudentService {
 
     private final StudentRepository studentRepository;
-    private final UserRepository userRepository;
+    private final UserDirectory userDirectory;
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
@@ -48,7 +47,7 @@ public class StudentService {
             throw new ApiException(HttpStatus.CONFLICT, "Student number already exists");
         }
 
-        User user = userRepository.findById(request.userId())
+        userDirectory.findById(request.userId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found: " + request.userId()));
 
@@ -58,7 +57,7 @@ public class StudentService {
         student.setEmail(request.email());
         student.setDepartment(request.department());
         student.setPhone(request.phone());
-        student.setUser(user);
+        student.setUserId(request.userId());
         studentRepository.save(student);
 
         auditService.record(actorEmail, "STUDENT_CREATED", "Created student " + request.email());

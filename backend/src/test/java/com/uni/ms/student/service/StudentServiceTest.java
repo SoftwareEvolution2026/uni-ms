@@ -9,9 +9,8 @@ import com.uni.ms.student.dto.StudentResponse;
 import com.uni.ms.student.dto.UpdateStudentRequest;
 import com.uni.ms.student.entity.Student;
 import com.uni.ms.student.repository.StudentRepository;
-import com.uni.ms.student.service.StudentService;
 import com.uni.ms.user.User;
-import com.uni.ms.user.UserRepository;
+import com.uni.ms.user.UserDirectory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +36,7 @@ class StudentServiceTest {
     @Mock
     private StudentRepository studentRepository;
     @Mock
-    private UserRepository userRepository;
+    private UserDirectory userDirectory;
     @Mock
     private AuditService auditService;
 
@@ -60,7 +59,7 @@ class StudentServiceTest {
         sampleStudent.setEmail("alice@uni.ms");
         sampleStudent.setDepartment("CS");
         sampleStudent.setPhone("0123456789");
-        sampleStudent.setUser(sampleUser);
+        sampleStudent.setUserId(10L);
     }
 
     // -- getById --
@@ -94,7 +93,7 @@ class StudentServiceTest {
         s2.setEmail("bob@uni.ms");
         s2.setDepartment("Math");
         s2.setPhone("111");
-        s2.setUser(sampleUser);
+        s2.setUserId(11L);
 
         when(studentRepository.findAll()).thenReturn(List.of(sampleStudent, s2));
 
@@ -120,7 +119,7 @@ class StudentServiceTest {
     void create_savesStudentWhenValid() {
         when(studentRepository.existsByEmail("new@uni.ms")).thenReturn(false);
         when(studentRepository.existsByStudentNumber("NEW001")).thenReturn(false);
-        when(userRepository.findById(10L)).thenReturn(Optional.of(sampleUser));
+        when(userDirectory.findById(10L)).thenReturn(Optional.of(sampleUser));
         when(studentRepository.save(any(Student.class))).thenAnswer(inv -> {
             Student s = inv.getArgument(0);
             s.setId(5L);
@@ -167,7 +166,7 @@ class StudentServiceTest {
     void create_throwsWhenUserNotFound() {
         when(studentRepository.existsByEmail("ok@uni.ms")).thenReturn(false);
         when(studentRepository.existsByStudentNumber("NEW001")).thenReturn(false);
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userDirectory.findById(999L)).thenReturn(Optional.empty());
 
         CreateStudentRequest request = new CreateStudentRequest(
                 "NEW001", "No User", "ok@uni.ms", "CS", "0123456789", 999L);
