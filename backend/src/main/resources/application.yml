@@ -2,9 +2,11 @@ spring:
   application:
     name: uni-ms
   datasource:
+    # Default driver is MySQL Connector/J. MariaDB users activate the 'mariadb' profile
+    # (SPRING_PROFILES_ACTIVE=mariadb) which overrides this URL — see application-mariadb.yml.
     url: ${DB_URL:jdbc:mysql://localhost:3306/uni_ms?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true}
     username: ${DB_USER:root}
-    password: ${DB_PASSWORD:austin}
+    password: ${DB_PASSWORD:root}
   jpa:
     hibernate:
       ddl-auto: validate          # Flyway owns the schema; JPA only validates it
