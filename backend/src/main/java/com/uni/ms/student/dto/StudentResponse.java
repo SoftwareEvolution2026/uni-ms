@@ -19,7 +19,7 @@ public record StudentResponse(
                 student.getEmail(),
                 student.getDepartment(),
                 student.getPhone(),
-                student.getUser() != null ? student.getUser().getId() : null
+                student.getUserId()
         );
     }
 }

@@ -1,5 +1,5 @@
 package com.uni.ms.student.dto;
-
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -22,7 +22,7 @@ public record CreateStudentRequest(
         @NotBlank(message = "Phone is required")
         String phone,
 
-        @NotBlank(message = "User id is required")
-        String userId
+        @NotNull(message = "User id is required")
+        Long userId
 ) {
 }
