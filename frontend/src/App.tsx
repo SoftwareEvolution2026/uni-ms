@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { ToastProvider } from "./components/ToastProvider";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Results from "./pages/Results";
 import Users from "./pages/Users";
 
 export default function App() {
@@ -18,6 +19,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/results"
+              element={
+                <ProtectedRoute role={["ROLE_ADMIN", "ROLE_LECTURER"]}>
+                  <Results />
                 </ProtectedRoute>
               }
             />

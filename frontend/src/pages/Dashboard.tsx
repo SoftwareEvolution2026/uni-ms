@@ -44,6 +44,11 @@ export default function Dashboard() {
               Manage Users
             </Link>
           )}
+          {user?.roles.some((r) => ["ROLE_ADMIN", "ROLE_LECTURER"].includes(r)) && (
+            <Link className="ghost-link" to="/results">
+              Results
+            </Link>
+          )}
           <button className="ghost" onClick={() => setPwOpen(true)}>
             Change password
           </button>
