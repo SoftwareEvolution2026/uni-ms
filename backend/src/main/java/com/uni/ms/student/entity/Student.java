@@ -1,11 +1,8 @@
 package com.uni.ms.student.entity;
+
 import com.uni.ms.common.domain.BaseEntity;
-import com.uni.ms.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,7 +30,6 @@ public class Student extends BaseEntity {
     @Column(nullable = false)
     private String phone;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @Column(name = "user_id", nullable = false, unique = true)
+    private Long userId;
 }
