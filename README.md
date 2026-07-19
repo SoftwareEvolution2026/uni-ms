@@ -54,10 +54,6 @@ Use a local MySQL/MariaDB (or a free cloud one like Railway / Aiven). The databa
 automatically on first run via `createDatabaseIfNotExist=true`, so you only need the server
 running. Copy `backend/.env.example` and adjust:
 
-> **MySQL vs MariaDB:** MySQL is the default driver. If you use MariaDB, run with the `mariadb`
-> Spring profile instead — `SPRING_PROFILES_ACTIVE=mariadb` (or
-> `mvn spring-boot:run -Dspring-boot.run.profiles=mariadb`). Both drivers are on the classpath.
-
 ```
 DB_URL=jdbc:mysql://localhost:3306/uni_ms?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
 DB_USER=root
