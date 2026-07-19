@@ -5,11 +5,13 @@ import com.uni.ms.user.User;
 import com.uni.ms.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /** Seeds one demo account per role on first startup (idempotent). See README for credentials. */
 @Component
+@Profile({"local", "test"})
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
@@ -19,9 +21,8 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         seed("System Admin", "admin@uni.ms", "Admin123!", Role.ROLE_ADMIN);
-        seed("Demo Lecturer", "lecturer@uni.ms", "Lecturer123!", Role.ROLE_LECTURER);
-        seed("Demo Staff", "staff@uni.ms", "Staff123!", Role.ROLE_STAFF);
-        seed("Demo Student", "student@uni.ms", "Student123!", Role.ROLE_STUDENT);
+        seed("Academic Manager", "manager@uni.ms", "Manager123!",
+                Role.ROLE_ACADEMIC_MANAGER);
     }
 
     private void seed(String fullName, String email, String rawPassword, Role role) {

@@ -1,8 +1,0 @@
-# MariaDB profile — activate with:  SPRING_PROFILES_ACTIVE=mariadb
-#   e.g.  mvn spring-boot:run -Dspring-boot.run.profiles=mariadb
-# Overrides only the datasource URL to use the MariaDB JDBC driver (jdbc:mariadb://).
-# Everything else is inherited from application.yml. Username/password still come from
-# DB_USER / DB_PASSWORD (default root/root).
-spring:
-  datasource:
-    url: ${DB_URL:jdbc:mariadb://localhost:3306/uni_ms?createDatabaseIfNotExist=true}

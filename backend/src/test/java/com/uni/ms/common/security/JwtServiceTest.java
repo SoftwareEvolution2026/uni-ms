@@ -15,11 +15,12 @@ class JwtServiceTest {
 
     @Test
     void generatesAndValidatesToken() {
-        String token = jwtService.generateAccessToken("alice@uni.ms", List.of("ROLE_STUDENT"));
+        String token = jwtService.generateAccessToken(
+                "alice@uni.ms", List.of("ROLE_ACADEMIC_MANAGER"));
 
         assertTrue(jwtService.isValid(token));
         assertEquals("alice@uni.ms", jwtService.extractEmail(token));
-        assertEquals(List.of("ROLE_STUDENT"), jwtService.extractRoles(token));
+        assertEquals(List.of("ROLE_ACADEMIC_MANAGER"), jwtService.extractRoles(token));
     }
 
     @Test

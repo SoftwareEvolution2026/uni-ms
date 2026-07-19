@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/uni_ms}
+    username: ${DB_USER:uni_ms}
+    password: ${DB_PASSWORD:uni_ms}
+
+logging:
+  level:
+    com.uni.ms: DEBUG

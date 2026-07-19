@@ -1,6 +1,7 @@
 package com.uni.ms.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.ms.testsupport.PostgreSqlIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class UserEditIntegrationTest {
+class UserEditIntegrationTest extends PostgreSqlIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,7 +42,7 @@ class UserEditIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"fullName":"Old Name","email":"edit-me@uni.ms",
-                                 "password":"Passw0rd!","roles":["ROLE_STUDENT"]}"""))
+                                 "password":"Passw0rd!","roles":["ROLE_ACADEMIC_MANAGER"]}"""))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         long id = mapper.readTree(created).get("id").asLong();
@@ -51,12 +52,12 @@ class UserEditIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"fullName":"New Name","email":"edit-me@uni.ms",
-                                 "roles":["ROLE_LECTURER","ROLE_STAFF"],"enabled":false}"""))
+                                 "roles":["ROLE_ADMIN","ROLE_ACADEMIC_MANAGER"],"enabled":false}"""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fullName").value("New Name"))
                 .andExpect(jsonPath("$.enabled").value(false))
                 .andExpect(jsonPath("$.roles", org.hamcrest.Matchers.containsInAnyOrder(
-                        "ROLE_LECTURER", "ROLE_STAFF")));
+                        "ROLE_ADMIN", "ROLE_ACADEMIC_MANAGER")));
     }
 
     @Test
@@ -75,7 +76,7 @@ class UserEditIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"fullName":"System Admin","email":"admin@uni.ms",
-                                 "roles":["ROLE_STUDENT"],"enabled":true}"""))
+                                 "roles":["ROLE_ACADEMIC_MANAGER"],"enabled":true}"""))
                 .andExpect(status().isBadRequest());
     }
 }

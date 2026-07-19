@@ -2,6 +2,7 @@ package com.uni.ms.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.ms.testsupport.PostgreSqlIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,14 +17,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Exercises the full Team 1 flow end-to-end against an in-memory H2 database:
- * admin logs in -> admin creates a user with a role -> that user logs in
+ * Exercises the identity flow end-to-end against PostgreSQL Testcontainers:
+ * admin logs in -> admin creates an academic manager -> that user logs in
  * -> refresh rotates -> the old refresh token is rejected.
  * The seeded admin comes from DataInitializer, which runs in the test context too.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-class AuthFlowIntegrationTest {
+class AuthFlowIntegrationTest extends PostgreSqlIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -54,16 +55,16 @@ class AuthFlowIntegrationTest {
     void adminCreatesUserThenThatUserLogsInAndRefreshes() throws Exception {
         String adminToken = login("admin@uni.ms", "Admin123!");
 
-        // 1. Admin creates a lecturer
+        // 1. Admin creates an academic manager
         String createBody = """
                 {"fullName":"Jane Doe","email":"jane@uni.ms","password":"Passw0rd!",
-                 "roles":["ROLE_LECTURER"]}""";
+                 "roles":["ROLE_ACADEMIC_MANAGER"]}""";
         mockMvc.perform(post("/api/v1/users")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON).content(createBody))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("jane@uni.ms"))
-                .andExpect(jsonPath("$.roles[0]").value("ROLE_LECTURER"));
+                .andExpect(jsonPath("$.roles[0]").value("ROLE_ACADEMIC_MANAGER"));
 
         // 2. The new user logs in
         String loginBody = """
@@ -94,12 +95,21 @@ class AuthFlowIntegrationTest {
 
     @Test
     void nonAdminCannotCreateUsers() throws Exception {
-        String studentToken = login("student@uni.ms", "Student123!");
+        String adminToken = login("admin@uni.ms", "Admin123!");
+        String managerBody = """
+                {"fullName":"Read Only Manager","email":"readonly@uni.ms",
+                 "password":"Manager123!","roles":["ROLE_ACADEMIC_MANAGER"]}""";
+        mockMvc.perform(post("/api/v1/users")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(managerBody))
+                .andExpect(status().isCreated());
+
+        String managerToken = login("readonly@uni.ms", "Manager123!");
         String createBody = """
                 {"fullName":"Hacker","email":"hacker@uni.ms","password":"Passw0rd!",
                  "roles":["ROLE_ADMIN"]}""";
         mockMvc.perform(post("/api/v1/users")
-                        .header("Authorization", "Bearer " + studentToken)
+                        .header("Authorization", "Bearer " + managerToken)
                         .contentType(MediaType.APPLICATION_JSON).content(createBody))
                 .andExpect(status().isForbidden());
     }
@@ -126,7 +136,7 @@ class AuthFlowIntegrationTest {
 
         String createBody = """
                 {"fullName":"Temp User","email":"temp@uni.ms","password":"Passw0rd!",
-                 "roles":["ROLE_STUDENT"]}""";
+                 "roles":["ROLE_ACADEMIC_MANAGER"]}""";
         String created = mockMvc.perform(post("/api/v1/users")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON).content(createBody))
