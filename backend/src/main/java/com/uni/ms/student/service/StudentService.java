@@ -21,10 +21,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class StudentService {
+
+    private static final Set<String> SORTABLE =
+            Set.of("id", "fullName", "email", "studentNumber", "department");
+
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final StudentRepository studentRepository;
     private final UserDirectory userDirectory;
@@ -47,8 +53,17 @@ public class StudentService {
     @Transactional(readOnly = true)
     public StudentPageResponse searchAndPaginate(String query, String department,
                                                  int page, int size, String sort) {
+        if (page < 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Page must not be negative");
+        }
+
+        size = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+
         String[] sortParts = sort.split(",");
         String sortField = sortParts[0];
+        if (!SORTABLE.contains(sortField)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid sort field: " + sortField);
+        }
         Sort.Direction sortDir = sortParts.length > 1
                 && sortParts[1].equalsIgnoreCase("desc")
                 ? Sort.Direction.DESC : Sort.Direction.ASC;

@@ -197,6 +197,32 @@ class StudentServiceTest {
         assertEquals(1, result.content().size());
     }
 
+    @Test
+    void searchAndPaginate_throwsOnInvalidSortField() {
+        ApiException ex = assertThrows(ApiException.class,
+                () -> studentService.searchAndPaginate("", "", 0, 20, "nonExistentField,asc"));
+        assertEquals("Invalid sort field: nonExistentField", ex.getMessage());
+    }
+
+    @Test
+    void searchAndPaginate_throwsOnNegativePage() {
+        ApiException ex = assertThrows(ApiException.class,
+                () -> studentService.searchAndPaginate("", "", -1, 20, "fullName,asc"));
+        assertEquals("Page must not be negative", ex.getMessage());
+    }
+
+    @Test
+    void searchAndPaginate_clampsOversizedPageSize() {
+        Pageable pageable = PageRequest.of(0, 100, Sort.by(Sort.Direction.ASC, "fullName"));
+        Page<Student> page = new PageImpl<>(List.of(sampleStudent), pageable, 1);
+        when(studentRepository.search(eq(""), eq(""), any(Pageable.class))).thenReturn(page);
+
+        StudentPageResponse result = studentService.searchAndPaginate("", "", 0, 1000000, "fullName,asc");
+
+        assertNotNull(result);
+        assertEquals(100, result.size());
+    }
+
     // -- getProfile --
 
     @Test
