@@ -12,3 +12,13 @@ export interface AuthResponse {
   tokenType: string;
   user: User;
 }
+
+export interface Result {
+  id: number;
+  studentId: number;
+  courseCode: string;
+  term: string;
+  grade: string;
+  score: number;
+  credits: number;
+}
