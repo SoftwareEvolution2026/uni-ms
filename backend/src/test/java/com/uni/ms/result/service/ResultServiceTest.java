@@ -117,7 +117,6 @@ class ResultServiceTest {
     @Test
     void update_modifiesResultWhenFound() {
         when(resultRepository.findById(1L)).thenReturn(Optional.of(sampleResult));
-        when(resultRepository.existsByStudentIdAndCourseCodeAndTerm(10L, "CS101", "Spring 2026")).thenReturn(false);
         when(resultRepository.save(any(Result.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var request = new UpdateResultRequest("CS101", "Spring 2026", "A+", 95.0, 3);
