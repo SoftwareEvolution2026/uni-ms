@@ -4,12 +4,18 @@ import com.uni.ms.common.audit.AuditService;
 import com.uni.ms.common.exception.ApiException;
 import com.uni.ms.common.exception.ResourceNotFoundException;
 import com.uni.ms.student.dto.CreateStudentRequest;
+import com.uni.ms.student.dto.StudentPageResponse;
+import com.uni.ms.student.dto.StudentProfileResponse;
 import com.uni.ms.student.dto.StudentResponse;
 import com.uni.ms.student.dto.UpdateStudentRequest;
 import com.uni.ms.student.entity.Student;
 import com.uni.ms.student.repository.StudentRepository;
 import com.uni.ms.user.UserDirectory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +42,38 @@ public class StudentService {
         return studentRepository.findAll().stream()
                 .map(StudentResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public StudentPageResponse searchAndPaginate(String query, String department,
+                                                 int page, int size, String sort) {
+        String[] sortParts = sort.split(",");
+        String sortField = sortParts[0];
+        Sort.Direction sortDir = sortParts.length > 1
+                && sortParts[1].equalsIgnoreCase("desc")
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, sortField));
+        Page<Student> studentPage = studentRepository.search(query, department, pageable);
+
+        List<StudentResponse> content = studentPage.getContent().stream()
+                .map(StudentResponse::from)
+                .toList();
+
+        return new StudentPageResponse(
+                content,
+                studentPage.getNumber(),
+                studentPage.getSize(),
+                studentPage.getTotalElements(),
+                studentPage.getTotalPages()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public StudentProfileResponse getProfile(Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + id));
+        return StudentProfileResponse.from(student);
     }
 
     @Transactional

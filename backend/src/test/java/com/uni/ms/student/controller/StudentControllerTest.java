@@ -2,8 +2,9 @@ package com.uni.ms.student.controller;
 
 import com.uni.ms.common.exception.ApiException;
 import com.uni.ms.common.exception.ResourceNotFoundException;
-import com.uni.ms.student.controller.StudentController;
 import com.uni.ms.student.dto.CreateStudentRequest;
+import com.uni.ms.student.dto.StudentPageResponse;
+import com.uni.ms.student.dto.StudentProfileResponse;
 import com.uni.ms.student.dto.StudentResponse;
 import com.uni.ms.student.dto.UpdateStudentRequest;
 import com.uni.ms.student.service.StudentService;
@@ -78,6 +79,78 @@ class StudentControllerTest {
 
         assertEquals(2, result.size());
         assertEquals("STU002", result.get(1).studentNumber());
+    }
+
+    // -- search --
+
+    @Test
+    void search_delegatesToServiceWithDefaults() {
+        StudentPageResponse pageResponse = new StudentPageResponse(
+                List.of(sampleResponse), 0, 20, 1, 1);
+        when(studentService.searchAndPaginate("", "", 0, 20, "fullName,asc"))
+                .thenReturn(pageResponse);
+
+        StudentPageResponse result = studentController.search("", "", 0, 20, "fullName,asc");
+
+        assertEquals(1, result.content().size());
+        assertEquals(0, result.page());
+        assertEquals(20, result.size());
+        assertEquals(1, result.totalElements());
+        verify(studentService).searchAndPaginate("", "", 0, 20, "fullName,asc");
+    }
+
+    @Test
+    void search_delegatesToServiceWithFilters() {
+        StudentPageResponse pageResponse = new StudentPageResponse(
+                List.of(sampleResponse), 0, 10, 1, 1);
+        when(studentService.searchAndPaginate("Alice", "CS", 0, 10, "email,desc"))
+                .thenReturn(pageResponse);
+
+        StudentPageResponse result = studentController.search("Alice", "CS", 0, 10, "email,desc");
+
+        assertEquals(1, result.content().size());
+        assertEquals("Alice", result.content().get(0).fullName());
+    }
+
+    @Test
+    void search_returnsEmptyPageWhenNoResults() {
+        StudentPageResponse emptyPage = new StudentPageResponse(
+                List.of(), 0, 20, 0, 0);
+        when(studentService.searchAndPaginate("nonexistent", "", 0, 20, "fullName,asc"))
+                .thenReturn(emptyPage);
+
+        StudentPageResponse result = studentController.search("nonexistent", "", 0, 20, "fullName,asc");
+
+        assertEquals(0, result.content().size());
+        assertEquals(0, result.totalElements());
+    }
+
+    // -- getProfile --
+
+    @Test
+    void getProfile_delegatesToService() {
+        StudentProfileResponse profileResponse = new StudentProfileResponse(
+                1L, "STU001", "Alice", "alice@uni.ms", "CS", "0123456789", 10L);
+        when(studentService.getProfile(1L)).thenReturn(profileResponse);
+
+        StudentProfileResponse result = studentController.getProfile(1L);
+
+        assertEquals("STU001", result.studentNumber());
+        assertEquals("Alice", result.fullName());
+        assertEquals("alice@uni.ms", result.email());
+        assertEquals("CS", result.department());
+        assertEquals("0123456789", result.phone());
+        assertEquals(10L, result.userId());
+        verify(studentService).getProfile(1L);
+    }
+
+    @Test
+    void getProfile_propagatesNotFound() {
+        when(studentService.getProfile(999L))
+                .thenThrow(new ResourceNotFoundException("Student not found: 999"));
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> studentController.getProfile(999L));
     }
 
     // -- create --
