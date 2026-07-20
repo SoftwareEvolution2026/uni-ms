@@ -1,117 +1,88 @@
-# University Student Management System (uni-ms)
+# University Academic Registry
 
-Version 1.0 — collaborative software-evolution project.
+`uni-ms` is a modular academic registry for identity, Departments, Courses and
+operational Dashboard statistics. It consists of a Spring Boot modular monolith
+and a React single-page application.
 
-A **modular monolith**: one Spring Boot backend + one React (Vite) frontend, one shared
-MySQL/MariaDB database. The system is split into vertical **modules**, one per development team.
-Each module is an independent package/folder that plugs into the shared platform (security,
-error handling, audit, database).
+## Technology
 
-## Tech stack
+- Java 17, Spring Boot 3.3, Spring Security and JWT access tokens
+- rotating, hashed opaque refresh tokens
+- PostgreSQL 16, Flyway and Hibernate schema validation
+- RFC 9457-style Problem Details, OpenAPI and Actuator
+- Testcontainers PostgreSQL and ArchUnit
+- React 18, TypeScript, Vite 8, React Router and Axios
 
-| Layer     | Technology                                            |
-| --------- | ----------------------------------------------------- |
-| Frontend  | React 18 + Vite + TypeScript, React Router, Axios     |
-| Backend   | Java 17, Spring Boot 3.3, Spring Security, Spring Data JPA |
-| Auth      | JWT access token + rotating refresh token             |
-| Database  | MySQL / MariaDB                                       |
-| Migrations| Flyway (`backend/src/main/resources/db/migration`)    |
-| Build     | Maven (backend), pnpm (frontend)                      |
-| CI/CD     | GitHub Actions → cloud deploy (Team 6)                |
+## Modules
 
-## Repository layout
-
-```
-uni-ms/
-├── backend/                 # Spring Boot modular monolith
-│   └── src/main/java/com/uni/ms/
-│       ├── common/          # shared platform: security, audit, error handling
-│       ├── user/            # Team 1 – user & role management
-│       ├── auth/            # Team 1 – authentication (access + refresh tokens)
-│       ├── student/         # Team 2 – student management        (stub)
-│       ├── course/          # Team 3 – course & department        (stub)
-│       ├── result/          # Team 4 – results & academic records (stub)
-│       └── report/          # Team 5 – reports & analytics         (stub)
-├── frontend/                # React + Vite app (same module split under src/features/)
-└── docs/                    # SRS, architecture, branching strategy
+```text
+backend/src/main/java/com/uni/ms
+├── identity                 authentication and user identity
+├── academiccatalog
+│   ├── department           Department lifecycle and search
+│   └── course               Course lifecycle and search
+├── dashboard                registry statistics
+└── common                   security, audit, errors and shared API types
 ```
 
-## Modules & teams (10 members = 5 teams of 2)
+Feature modules use `api`, `application`, `domain` and `infrastructure` layers.
+Controllers never access repositories directly. The Student module and all other
+legacy business modules are outside the active application scope.
 
-| Team | Module            | Backend owner | Frontend owner |
-| ---- | ----------------- | ------------- | -------------- |
-| 1    | Auth & Users      | Student 1     | Student 2      |
-| 2    | Student mgmt      | Student 3     | Student 4      |
-| 3    | Course & Dept     | Student 5     | Student 6      |
-| 4    | Results & Records | Student 7     | Student 8      |
-| 5    | Reports/Analytics | Student 9     | Student 10     |
-| 6    | Notifications / Config / CI-CD / Deploy | _left for now_ | |
+## Local setup
 
-## Quick start
+Requirements: Java 17, Maven, Docker, Node.js and npm.
 
-### 1. Database
-Use a local MySQL/MariaDB (or a free cloud one like Railway / Aiven). The database is created
-automatically on first run via `createDatabaseIfNotExist=true`, so you only need the server
-running. Copy `backend/.env.example` and adjust:
+1. Copy `backend/.env.example` to `backend/.env` and replace all example secrets.
+2. Start PostgreSQL:
 
-> **MySQL vs MariaDB:** MySQL is the default driver. If you use MariaDB, run with the `mariadb`
-> Spring profile instead — `SPRING_PROFILES_ACTIVE=mariadb` (or
-> `mvn spring-boot:run -Dspring-boot.run.profiles=mariadb`). Both drivers are on the classpath.
+   ```bash
+   docker compose up -d postgres
+   ```
 
-```
-DB_URL=jdbc:mysql://localhost:3306/uni_ms?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
-DB_USER=root
-DB_PASSWORD=root
-JWT_SECRET=change-me-to-a-long-random-string-at-least-32-chars
-```
+3. Export the backend environment and run the API:
 
-### 2. Backend
+   ```bash
+   cd backend
+   set -a && source .env && set +a
+   mvn spring-boot:run
+   ```
+
+4. Run the frontend:
+
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+The API is available at `http://localhost:8081/api/v1`, Swagger UI at
+`http://localhost:8081/swagger-ui.html`, health at
+`http://localhost:8081/actuator/health`, and the frontend at
+`http://localhost:5173`.
+
+Initial administrator creation is disabled by default. To bootstrap a local
+administrator, explicitly set `INITIAL_ADMIN_ENABLED=true` and provide
+`INITIAL_ADMIN_NAME`, `INITIAL_ADMIN_EMAIL` and a strong `INITIAL_ADMIN_PASSWORD`.
+Never keep those bootstrap credentials enabled in production.
+
+## API overview
+
+- `/api/v1/auth`: login, refresh, logout, current identity and password change
+- `/api/v1/departments`: CRUD, search, filters, pagination, trash and restore
+- `/api/v1/courses`: CRUD, search, filters, pagination, trash and restore
+- `/api/v1/dashboard`: non-deleted Department and Course statistics
+
+`ADMIN` and `ACADEMIC_MANAGER` can use the registry. Only `ADMIN` may permanently
+delete records. All failures use `application/problem+json`.
+
+## Verification
+
 ```bash
-cd backend
-mvn spring-boot:run       # Flyway auto-creates the schema on startup
-```
-API runs on http://localhost:8081
-
-### 3. Frontend
-```bash
-cd frontend
-pnpm install
-pnpm dev                  # http://localhost:5173
+cd backend && mvn clean test && mvn verify
+cd frontend && npm run typecheck && npm run build
 ```
 
-## Auth API (Team 1)
-
-There is **no public self-registration**. An admin creates accounts and assigns roles.
-
-| Method | Endpoint                | Body                                      | Auth  |
-| ------ | ----------------------- | ----------------------------------------- | ----- |
-| POST   | `/api/v1/auth/login`    | `{email,password}`                        | no    |
-| POST   | `/api/v1/auth/refresh`  | `{refreshToken}`                          | no    |
-| POST   | `/api/v1/auth/logout`   | `{refreshToken}`                          | no    |
-| PUT    | `/api/v1/auth/password` | `{currentPassword,newPassword}`           | yes   |
-| GET    | `/api/v1/users/me`      | —                                         | yes   |
-| GET    | `/api/v1/users`         | —                                         | ADMIN |
-| POST   | `/api/v1/users`         | `{fullName,email,password,roles:[...]}`   | ADMIN |
-| PUT    | `/api/v1/users/{id}`    | `{fullName,email,roles:[...],enabled}`    | ADMIN |
-| DELETE | `/api/v1/users/{id}`    | —                                         | ADMIN |
-
-**Seeded accounts** (created on first startup): `admin@uni.ms` / `Admin123!` (ADMIN),
-`lecturer@uni.ms` / `Lecturer123!`, `staff@uni.ms` / `Staff123!`, `student@uni.ms` / `Student123!`.
-
-See [docs/BRANCHING.md](docs/BRANCHING.md) for the Git workflow every team follows.
-
-## Contributing
-
-All contributors must read [CONTRIBUTING.md](CONTRIBUTING.md) — it covers local setup, the
-branching strategy, commit-message conventions, the pull-request process, and coding standards.
-
-## Documentation
-
-| Document | Purpose |
-| -------- | ------- |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Software architecture: modular-monolith design, module map & dependency rules, auth design, data model, deployment view |
-| [docs/BRANCHING.md](docs/BRANCHING.md) | Git branching strategy and workflow every team follows |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, commit conventions, PR process, coding standards |
-
-Start with the [architecture document](docs/ARCHITECTURE.md) — it explains how the modules fit
-together and the rules that let all five teams work in parallel without stepping on each other.
+See [architecture](docs/ARCHITECTURE.md), [security](docs/SECURITY.md),
+[Departments](docs/DEPARTMENTS.md), [Courses](docs/COURSES.md), and the
+[contribution guide](CONTRIBUTING.md).

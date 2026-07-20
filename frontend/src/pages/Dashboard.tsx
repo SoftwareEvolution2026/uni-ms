@@ -1,95 +1,52 @@
-import { FormEvent, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../api/client";
+import { dashboardApi, errorMessage } from "../api/catalogApi";
 import { useAuth } from "../auth/AuthContext";
-import { useToast } from "../components/ToastProvider";
-import { Modal } from "../components/Modal";
+import type { DashboardStatistics } from "../types";
+
+const empty: DashboardStatistics = {
+  totalDepartments: 0, activeDepartments: 0, inactiveDepartments: 0,
+  totalCourses: 0, activeCourses: 0, inactiveCourses: 0,
+};
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
-  const toast = useToast();
-  const roles = user?.roles.map((r) => r.replace("ROLE_", "")).join(", ");
+  const { user } = useAuth();
+  const [statistics, setStatistics] = useState(empty);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [pwOpen, setPwOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  async function changePassword(e: FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await api.put("/auth/password", { currentPassword, newPassword });
-      toast.success("Password changed");
-      setPwOpen(false);
-      setCurrentPassword("");
-      setNewPassword("");
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Failed to change password";
-      toast.error(message);
-    } finally {
-      setSubmitting(false);
-    }
+  async function load() {
+    setLoading(true);
+    setError("");
+    try { setStatistics(await dashboardApi.get()); }
+    catch (reason) { setError(errorMessage(reason, "Dashboard statistics could not be loaded.")); }
+    finally { setLoading(false); }
   }
 
+  useEffect(() => { void load(); }, []);
+
+  const cards = [
+    ["Departments", statistics.totalDepartments, "All registered departments", "departments", "blue"],
+    ["Active departments", statistics.activeDepartments, "Currently available", "departments?status=ACTIVE", "green"],
+    ["Inactive departments", statistics.inactiveDepartments, "Temporarily inactive", "departments?status=INACTIVE", "amber"],
+    ["Courses", statistics.totalCourses, "All registered courses", "courses", "violet"],
+    ["Active courses", statistics.activeCourses, "Currently delivered", "courses?status=ACTIVE", "teal"],
+    ["Inactive courses", statistics.inactiveCourses, "Not currently delivered", "courses?status=INACTIVE", "rose"],
+  ] as const;
+
   return (
-    <div className="page">
-      <header className="topbar">
-        <strong>uni-ms</strong>
-        <div>
-          {user?.roles.includes("ROLE_ADMIN") && (
-            <Link className="ghost-link" to="/users">
-              Manage Users
-            </Link>
-          )}
-          <button className="ghost" onClick={() => setPwOpen(true)}>
-            Change password
-          </button>
-          <button className="ghost" onClick={logout}>
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <main>
-        <div className="welcome">
-          <h1>Welcome, {user?.fullName}</h1>
-          <p className="muted">Signed in as {user?.email}</p>
-          <span className="badge">{roles}</span>
-        </div>
-      </main>
-
-      <Modal open={pwOpen} title="Change password" onClose={() => setPwOpen(false)}>
-        <form onSubmit={changePassword}>
-          <label>
-            Current password
-            <input
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              type="password"
-              required
-            />
-          </label>
-          <label>
-            New password
-            <input
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              type="password"
-              minLength={8}
-              required
-            />
-          </label>
-          <div className="modal-actions">
-            <button type="button" className="ghost" onClick={() => setPwOpen(false)}>
-              Cancel
-            </button>
-            <button disabled={submitting}>{submitting ? "Saving…" : "Change password"}</button>
-          </div>
-        </form>
-      </Modal>
-    </div>
+    <>
+      <header className="page-heading"><div><span className="eyebrow">Overview</span><h1>Good day, {user?.name.split(" ")[0]}</h1><p>Here is the current state of your academic registry.</p></div><button className="button secondary" onClick={load}>↻ Refresh</button></header>
+      {error && <div className="error-banner"><span>{error}</span><button onClick={load}>Retry</button></div>}
+      <section className="stat-grid" aria-busy={loading}>
+        {cards.map(([label, value, note, path, tone]) => (
+          <Link to={`/${path}`} className={`stat-card tone-${tone}`} key={label}>
+            <div className="stat-icon">{label.includes("Course") || label.includes("course") ? "▤" : "⌂"}</div>
+            <span>{label}</span><strong>{loading ? "—" : value}</strong><small>{note}</small>
+          </Link>
+        ))}
+      </section>
+      <section className="panel quick-panel"><div><span className="eyebrow">Quick access</span><h2>Registry management</h2></div><div className="quick-links"><Link to="/departments"><span>⌂</span><div><strong>Manage departments</strong><small>Structure, status and faculty</small></div><b>→</b></Link><Link to="/courses"><span>▤</span><div><strong>Manage courses</strong><small>Curriculum and academic periods</small></div><b>→</b></Link></div></section>
+    </>
   );
 }

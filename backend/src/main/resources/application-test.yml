@@ -12,8 +12,20 @@ app:
     secret: test-only-secret-that-is-long-enough-for-hmac-sha256-signing
     access-expiration-ms: 900000
     refresh-expiration-ms: 604800000
+    issuer: uni-ms-test
+    audience: uni-ms-test-api
+    clock-skew-seconds: 0
   cors:
     allowed-origins: http://localhost:5173
+  security:
+    login-attempts:
+      max-failures: 5
+      window: 15m
+  initial-admin:
+    enabled: true
+    name: Academic Administrator
+    email: admin@university.test
+    password: Admin123!
 
 logging:
   level:

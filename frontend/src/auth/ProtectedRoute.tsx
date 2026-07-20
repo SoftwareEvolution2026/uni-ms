@@ -4,17 +4,17 @@ import { useAuth } from "./AuthContext";
 
 export function ProtectedRoute({
   children,
-  role,
+  roles,
 }: {
   children: ReactNode;
-  role?: string;
+  roles?: string[];
 }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <div className="center">Loading…</div>;
+  if (loading) return <div className="app-loader" aria-label="Loading"><span /></div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (role && !user.roles.includes(role)) {
-    return <Navigate to="/dashboard" replace />;
+  if (roles && !roles.includes(user.role)) {
+    return <Navigate to="/403" replace />;
   }
   return <>{children}</>;
 }

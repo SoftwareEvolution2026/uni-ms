@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       try {
-        const { data } = await api.get<User>("/users/me");
+        const { data } = await api.get<User>("/auth/me");
         setUser(data);
       } catch {
         tokenStore.clear();
@@ -41,7 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function login(email: string, password: string) {
-    const { data } = await api.post<AuthResponse>("/auth/login", { email, password });
+    const { data } = await api.post<AuthResponse>("/auth/login", {
+      email: email.trim().toLowerCase(),
+      password,
+    });
     tokenStore.set(data.accessToken, data.refreshToken);
     setUser(data.user);
   }

@@ -5,7 +5,9 @@ interface ConfirmDialogProps {
   title?: string;
   message: string;
   confirmLabel?: string;
-  onConfirm: () => void;
+  busy?: boolean;
+  danger?: boolean;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -14,6 +16,8 @@ export function ConfirmDialog({
   title = "Please confirm",
   message,
   confirmLabel = "Confirm",
+  busy = false,
+  danger = true,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -21,11 +25,11 @@ export function ConfirmDialog({
     <Modal open={open} title={title} onClose={onCancel}>
       <p className="muted">{message}</p>
       <div className="modal-actions">
-        <button className="ghost" onClick={onCancel}>
+        <button className="button secondary" onClick={onCancel} disabled={busy}>
           Cancel
         </button>
-        <button className="danger" onClick={onConfirm}>
-          {confirmLabel}
+        <button className={`button ${danger ? "danger" : "primary"}`} onClick={onConfirm} disabled={busy}>
+          {busy ? "Working…" : confirmLabel}
         </button>
       </div>
     </Modal>

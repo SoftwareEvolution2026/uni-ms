@@ -7,8 +7,8 @@ these conventions so we can integrate everyone's work smoothly.
 
 - JDK 17
 - Maven 3.9+
-- Node 20+ and pnpm 10+
-- MySQL / MariaDB running locally (or a cloud instance)
+- Node 20+ and npm 10+
+- Docker Desktop for the official PostgreSQL 16 development database
 
 ## Local setup
 
@@ -24,8 +24,8 @@ mvn spring-boot:run            # http://localhost:8081
 
 # frontend (new terminal)
 cd frontend
-pnpm install
-pnpm dev                       # http://localhost:5173
+npm install
+npm run dev                    # http://localhost:5173
 ```
 
 The database schema is created automatically by Flyway on startup, and demo accounts are
@@ -38,7 +38,7 @@ for the full strategy and each team's branch prefix.
 
 ```bash
 git switch develop && git pull
-git switch -c feature/student-crud
+git switch -c feature/course-search
 ```
 
 ## Commit messages
@@ -46,13 +46,13 @@ git switch -c feature/student-crud
 Use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-feat(student): add create-student endpoint
+feat(course): add course search endpoint
 fix(auth): reject expired refresh tokens
 test(course): cover duplicate-code validation
 docs(readme): document deployment steps
 ```
 
-Scope = your module (`auth`, `user`, `student`, `course`, `result`, `report`, `ci`).
+Scope = your module (`identity`, `department`, `course`, `dashboard`, `shared`, `ci`).
 Commit small and often; do not bundle unrelated changes.
 
 ## Pull requests
@@ -75,7 +75,7 @@ Commit small and often; do not bundle unrelated changes.
 - Write at least one test per feature (unit or MockMvc slice).
 
 **Frontend (React / TypeScript)**
-- TypeScript `strict` must pass (`pnpm build`).
+- TypeScript `strict` must pass (`npm run build`).
 - Call the backend through the shared `api` client (`src/api/client.ts`) — auth is automatic.
 - Put each module's UI under `src/features/<module>/` or `src/pages/`.
 - Use the toast service for feedback and the `Modal` / `ConfirmDialog` components for dialogs —
@@ -85,5 +85,5 @@ Commit small and often; do not bundle unrelated changes.
 
 ```bash
 cd backend  && mvn test        # backend tests pass
-cd frontend && pnpm build      # typecheck + build pass
+cd frontend && npm run build   # typecheck + build pass
 ```

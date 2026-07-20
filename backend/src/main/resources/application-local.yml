@@ -7,6 +7,13 @@ spring:
     username: ${DB_USER:uni_ms}
     password: ${DB_PASSWORD:uni_ms}
 
+app:
+  initial-admin:
+    enabled: ${INITIAL_ADMIN_ENABLED:false}
+    name: ${INITIAL_ADMIN_NAME:Academic Administrator}
+    email: ${INITIAL_ADMIN_EMAIL:admin@university.test}
+    password: ${INITIAL_ADMIN_PASSWORD:}
+
 logging:
   level:
     com.uni.ms: DEBUG
