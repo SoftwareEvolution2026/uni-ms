@@ -5,6 +5,8 @@ import com.uni.ms.common.audit.AuditService;
 import com.uni.ms.common.exception.ApiException;
 import com.uni.ms.common.exception.ResourceNotFoundException;
 import com.uni.ms.student.dto.CreateStudentRequest;
+import com.uni.ms.student.dto.StudentPageResponse;
+import com.uni.ms.student.dto.StudentProfileResponse;
 import com.uni.ms.student.dto.StudentResponse;
 import com.uni.ms.student.dto.UpdateStudentRequest;
 import com.uni.ms.student.entity.Student;
@@ -17,6 +19,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -111,6 +119,131 @@ class StudentServiceTest {
         List<StudentResponse> result = studentService.listAll();
 
         assertEquals(0, result.size());
+    }
+
+    // -- searchAndPaginate --
+
+    @Test
+    void searchAndPaginate_returnsPaginatedResults() {
+        Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "fullName"));
+        Student s2 = new Student();
+        s2.setId(2L);
+        s2.setStudentNumber("STU002");
+        s2.setFullName("Bob");
+        s2.setEmail("bob@uni.ms");
+        s2.setDepartment("Math");
+        s2.setPhone("111");
+        s2.setUserId(11L);
+
+        Page<Student> page = new PageImpl<>(List.of(sampleStudent, s2), pageable, 2);
+        when(studentRepository.search(eq(""), eq(""), any(Pageable.class))).thenReturn(page);
+
+        StudentPageResponse result = studentService.searchAndPaginate("", "", 0, 20, "fullName,asc");
+
+        assertEquals(2, result.content().size());
+        assertEquals(0, result.page());
+        assertEquals(20, result.size());
+        assertEquals(2, result.totalElements());
+        assertEquals(1, result.totalPages());
+    }
+
+    @Test
+    void searchAndPaginate_filtersByQuery() {
+        Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "fullName"));
+        Page<Student> page = new PageImpl<>(List.of(sampleStudent), pageable, 1);
+        when(studentRepository.search(eq("Alice"), eq(""), any(Pageable.class))).thenReturn(page);
+
+        StudentPageResponse result = studentService.searchAndPaginate("Alice", "", 0, 20, "fullName,asc");
+
+        assertEquals(1, result.content().size());
+        assertEquals("Alice", result.content().get(0).fullName());
+        verify(studentRepository).search(eq("Alice"), eq(""), any(Pageable.class));
+    }
+
+    @Test
+    void searchAndPaginate_filtersByDepartment() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "studentNumber"));
+        Page<Student> page = new PageImpl<>(List.of(sampleStudent), pageable, 1);
+        when(studentRepository.search(eq(""), eq("CS"), any(Pageable.class))).thenReturn(page);
+
+        StudentPageResponse result = studentService.searchAndPaginate("", "CS", 0, 10, "studentNumber,desc");
+
+        assertEquals(1, result.content().size());
+        assertEquals("CS", result.content().get(0).department());
+    }
+
+    @Test
+    void searchAndPaginate_returnsEmptyPageWhenNoResults() {
+        Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "fullName"));
+        Page<Student> page = new PageImpl<>(List.of(), pageable, 0);
+        when(studentRepository.search(eq("nonexistent"), eq(""), any(Pageable.class))).thenReturn(page);
+
+        StudentPageResponse result = studentService.searchAndPaginate("nonexistent", "", 0, 20, "fullName,asc");
+
+        assertEquals(0, result.content().size());
+        assertEquals(0, result.totalElements());
+        assertEquals(0, result.totalPages());
+    }
+
+    @Test
+    void searchAndPaginate_handlesDescSort() {
+        Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "email"));
+        Page<Student> page = new PageImpl<>(List.of(sampleStudent), pageable, 1);
+        when(studentRepository.search(eq(""), eq(""), any(Pageable.class))).thenReturn(page);
+
+        StudentPageResponse result = studentService.searchAndPaginate("", "", 0, 20, "email,desc");
+
+        assertNotNull(result);
+        assertEquals(1, result.content().size());
+    }
+
+    @Test
+    void searchAndPaginate_throwsOnInvalidSortField() {
+        ApiException ex = assertThrows(ApiException.class,
+                () -> studentService.searchAndPaginate("", "", 0, 20, "nonExistentField,asc"));
+        assertEquals("Invalid sort field: nonExistentField", ex.getMessage());
+    }
+
+    @Test
+    void searchAndPaginate_throwsOnNegativePage() {
+        ApiException ex = assertThrows(ApiException.class,
+                () -> studentService.searchAndPaginate("", "", -1, 20, "fullName,asc"));
+        assertEquals("Page must not be negative", ex.getMessage());
+    }
+
+    @Test
+    void searchAndPaginate_clampsOversizedPageSize() {
+        Pageable pageable = PageRequest.of(0, 100, Sort.by(Sort.Direction.ASC, "fullName"));
+        Page<Student> page = new PageImpl<>(List.of(sampleStudent), pageable, 1);
+        when(studentRepository.search(eq(""), eq(""), any(Pageable.class))).thenReturn(page);
+
+        StudentPageResponse result = studentService.searchAndPaginate("", "", 0, 1000000, "fullName,asc");
+
+        assertNotNull(result);
+        assertEquals(100, result.size());
+    }
+
+    // -- getProfile --
+
+    @Test
+    void getProfile_returnsProfileWhenFound() {
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(sampleStudent));
+
+        StudentProfileResponse response = studentService.getProfile(1L);
+
+        assertEquals("STU001", response.studentNumber());
+        assertEquals("Alice", response.fullName());
+        assertEquals("alice@uni.ms", response.email());
+        assertEquals("CS", response.department());
+        assertEquals("0123456789", response.phone());
+        assertEquals(10L, response.userId());
+    }
+
+    @Test
+    void getProfile_throwsWhenNotFound() {
+        when(studentRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> studentService.getProfile(999L));
     }
 
     // -- create --

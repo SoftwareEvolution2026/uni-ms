@@ -1,6 +1,8 @@
 package com.uni.ms.student.controller;
 
 import com.uni.ms.student.dto.CreateStudentRequest;
+import com.uni.ms.student.dto.StudentPageResponse;
+import com.uni.ms.student.dto.StudentProfileResponse;
 import com.uni.ms.student.dto.StudentResponse;
 import com.uni.ms.student.dto.UpdateStudentRequest;
 import com.uni.ms.student.service.StudentService;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -35,10 +38,27 @@ public class StudentController {
         return studentService.listAll();
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public StudentPageResponse search(
+            @RequestParam(defaultValue = "") String query,
+            @RequestParam(defaultValue = "") String department,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "fullName,asc") String sort) {
+        return studentService.searchAndPaginate(query, department, page, size, sort);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
     public StudentResponse getById(@PathVariable Long id) {
         return studentService.getById(id);
+    }
+
+    @GetMapping("/{id}/profile")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public StudentProfileResponse getProfile(@PathVariable Long id) {
+        return studentService.getProfile(id);
     }
 
     @PostMapping
